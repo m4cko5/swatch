@@ -1,12 +1,12 @@
 """Main http service that handles starting app modules."""
 
-from functools import reduce
 import logging
+from functools import reduce
 from typing import Any, Dict
 
 import cv2
 import numpy as np
-
+import requests
 from flask import (
     Blueprint,
     Flask,
@@ -15,7 +15,6 @@ from flask import (
     make_response,
     request,
 )
-
 from peewee import DoesNotExist, operator
 from playhouse.shortcuts import model_to_dict
 
@@ -24,7 +23,6 @@ from swatch.image import ImageProcessor
 from swatch.models import Detection
 from swatch.snapshot import SnapshotProcessor
 from swatch.util import mask_image, parse_colors_from_image
-
 
 logger = logging.getLogger(__name__)
 flask_logger = logging.getLogger("werkzeug")
@@ -150,6 +148,35 @@ def test_mask() -> Any:
     response = make_response(jpg.tobytes())
     response.headers["Content-Type"] = "image/jpg"
     return response
+
+
+@bp.route("/proxy/image", methods=["GET"])
+def proxy_image() -> Any:
+    """Proxy external images to avoid CORS issues in frontend."""
+    image_url = request.args.get("url")
+    if not image_url:
+        return make_response(
+            jsonify({"success": False, "message": "URL parameter is required"}),
+            400,
+        )
+
+    try:
+        # Fetch the image from the external URL
+        response = requests.get(image_url, timeout=10)
+        response.raise_for_status()
+
+        # Return the image with proper headers
+        proxy_response = make_response(response.content)
+        content_type = response.headers.get("Content-Type", "application/octet-stream")
+        proxy_response.headers["Content-Type"] = content_type
+        proxy_response.headers["Access-Control-Allow-Origin"] = "*"
+        return proxy_response
+
+    except requests.exceptions.RequestException as e:
+        return make_response(
+            jsonify({"success": False, "message": f"Failed to fetch image: {str(e)}"}),
+            400,
+        )
 
 
 ### Detection API Routes
