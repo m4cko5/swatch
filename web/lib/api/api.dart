@@ -147,8 +147,10 @@ class SwatchApi {
 
   Future<Uint8List> getImageBytes(final String imageSource) async {
     try {
+      // Use the proxy endpoint to avoid CORS issues
+      final String proxyUrl = "${_useHttps ? 'https' : 'http'}://$_swatchHost/api/proxy/image?url=${Uri.encodeComponent(imageSource)}";
       final http.Response r = await http.get(
-        Uri.parse(imageSource),
+        Uri.parse(proxyUrl),
       );
       return r.bodyBytes;
     } catch (e) {
