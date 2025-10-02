@@ -1,5 +1,3 @@
-FROM crzynik/swatch-nginx:latest AS nginx
-
 FROM debian:bullseye-slim AS flutter-build
 
 ENV FLUTTER_ALLOW_ROOT="true"
@@ -30,9 +28,12 @@ COPY requirements_dev.txt /requirements_dev.txt
 ENV OPENCV_VERSION="4.5.1"
 ENV FLASK_ENV=development
 
-RUN pip install -r requirements.txt
+# Install nginx and Python dependencies
+RUN apt-get update && \
+    apt-get install -y nginx && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY --from=nginx /usr/local/nginx/ /usr/local/nginx/
+RUN pip install -r requirements.txt
 
 # build swatch frontend
 WORKDIR /opt/swatch/

@@ -1,4 +1,5 @@
 """Main SwatchApp responsible for running the app."""
+
 import logging
 import os
 import multiprocessing
@@ -31,7 +32,7 @@ class SwatchApp:
         logger.info("Starting SwatchApp")
         self.stop_event = multiprocessing.Event()
         # startup nginx
-        os.system("/usr/local/nginx/sbin/nginx &")
+        os.system("/usr/sbin/nginx &")
 
         # startup internal processes
         try:

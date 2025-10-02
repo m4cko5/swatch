@@ -1,2 +1,2 @@
 #!/usr/bin/execlineb -P
-/usr/local/nginx/sbin/nginx
+/usr/sbin/nginx -g "daemon off;"
