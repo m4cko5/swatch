@@ -202,11 +202,20 @@ class SnapshotProcessor:
             return None
 
         img = cv2.imdecode(np.asarray(bytearray(img_bytes), dtype=np.uint8), -1)
+
+        # Check if image decoding was successful
+        if img is None or img.size == 0:
+            return None
+
         coordinates = camera_config.zones[zone_name].coordinates.split(", ")
         crop = img[
             int(coordinates[1]) : int(coordinates[3]),
             int(coordinates[0]) : int(coordinates[2]),
         ]
+
+        # Check if crop is valid before encoding
+        if crop is None or crop.size == 0:
+            return None
 
         _, jpg = cv2.imencode(".jpg", crop, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
         return jpg.tobytes()
