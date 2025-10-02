@@ -61,16 +61,17 @@ def status() -> str:
 @bp.route("/config", methods=["GET"])
 def get_config() -> Any:
     """Get current config."""
-    return make_response(jsonify(current_app.swatch_config.dict()), 200)
+    return make_response(jsonify(current_app.swatch_config.model_dump()), 200)
 
 
 @bp.route("/config/schema", methods=["GET"])
 def get_config_schema() -> Any:
     """Get schema for the swatch config.
     Which is useful for vscode or other code completion."""
-    return current_app.response_class(
-        current_app.swatch_config.schema_json(), mimetype="application/json"
-    )
+    import json
+
+    schema = type(current_app.swatch_config).model_json_schema()
+    return current_app.response_class(json.dumps(schema), mimetype="application/json")
 
 
 ### Color Testing Routes

@@ -21,7 +21,7 @@ RUN export PATH="$PATH:/flutter/bin" && \
     flutter pub get && \
     flutter build web
 
-FROM python:3.10
+FROM python:3.12
 
 # install dependencies
 COPY requirements.txt /requirements.txt
