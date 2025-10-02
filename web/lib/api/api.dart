@@ -12,19 +12,34 @@ import 'package:window_location_href/window_location_href.dart';
 class SwatchApi {
   static final SwatchApi _singleton = SwatchApi._internal();
   static String _swatchHost = "";
+  static bool _useHttps = false;
 
   factory SwatchApi() {
     if (kDebugMode) {
       _swatchHost = "localhost:4500";
+      _useHttps = false;
     } else {
-      final location = (getHref() ?? "").replaceAll("http://", "");
+      final href = getHref() ?? "";
+      
+      // Parse the URL properly to extract host and port
+      try {
+        final uri = Uri.parse(href);
+        _swatchHost = uri.host;
+        _useHttps = uri.scheme == 'https';
+        if (uri.hasPort && uri.port != 80 && uri.port != 443) {
+          _swatchHost = "${uri.host}:${uri.port}";
+        }
+      } catch (e) {
+        // Fallback to the old method if parsing fails
+        final location = href.replaceAll("http://", "").replaceAll("https://", "");
+        _useHttps = href.startsWith("https://");
+        final pathStart = location.indexOf("/");
 
-      final pathStart = location.indexOf("/");
-
-      if (pathStart == -1) {
-        _swatchHost = location;
-      } else {
-        _swatchHost = location.substring(0, pathStart);
+        if (pathStart == -1) {
+          _swatchHost = location;
+        } else {
+          _swatchHost = location.substring(0, pathStart);
+        }
       }
     }
 
@@ -33,13 +48,19 @@ class SwatchApi {
 
   SwatchApi._internal();
 
-  String getHost() => Uri.http(_swatchHost, "").toString();
+  String getHost() => _useHttps 
+      ? Uri.https(_swatchHost, "").toString()
+      : Uri.http(_swatchHost, "").toString();
+
+  Uri _buildUri(String path) => _useHttps 
+      ? Uri.https(_swatchHost, path)
+      : Uri.http(_swatchHost, path);
 
   /// Swatch API Funs
 
   Future<Config> getConfig() async {
     const base = "/api/config";
-    final response = await http.get(Uri.http(_swatchHost, base)).timeout(
+    final response = await http.get(_buildUri(base)).timeout(
           const Duration(seconds: 15),
         );
 
@@ -52,7 +73,7 @@ class SwatchApi {
 
   Future<List<DetectionEvent>> getDetections() async {
     const base = "/api/detections";
-    final response = await http.get(Uri.http(_swatchHost, base)).timeout(
+    final response = await http.get(_buildUri(base)).timeout(
           const Duration(seconds: 15),
         );
 
@@ -68,7 +89,7 @@ class SwatchApi {
 
   Future<Config> getLatest() async {
     const base = "/api/all/latest";
-    final response = await http.get(Uri.http(_swatchHost, base)).timeout(
+    final response = await http.get(_buildUri(base)).timeout(
           const Duration(seconds: 15),
         );
 
@@ -85,7 +106,7 @@ class SwatchApi {
     String colorUpper,
   ) async {
     const base = "/api/colortest/mask";
-    final request = http.MultipartRequest("POST", Uri.http(_swatchHost, base));
+    final request = http.MultipartRequest("POST", _buildUri(base));
     request.fields["color_lower"] = colorLower;
     request.fields["color_upper"] = colorUpper;
     request.files.add(
@@ -111,7 +132,7 @@ class SwatchApi {
 
   Future<bool> deleteDetection(final String detectionId) async {
     final base = "/api/detections/$detectionId";
-    final response = await http.delete(Uri.http(_swatchHost, base)).timeout(
+    final response = await http.delete(_buildUri(base)).timeout(
       const Duration(seconds: 15),
     );
 
