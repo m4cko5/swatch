@@ -1,0 +1,12 @@
+services:
+  swatch:
+    container_name: swatch
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./config/config.yaml:/config/config.yaml:ro
+    ports:
+      - "4500:4500"
+      - "4501:4501"
