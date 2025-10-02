@@ -4,6 +4,7 @@ config/config.yaml
 debug/
 .DS_Store
 .vscode
+.venv/
 swatch/version.py
 
 swatch/__pycache__
